@@ -1,13 +1,46 @@
 const std = @import("std");
+const generated = @import("backends/generated.zig");
+pub const c = @import("fuse_ops.zig").c;
 
-pub fn myGetFileContent(path: []const u8) []const u8 {
-    std.log.info("myGetFileContent {s}", .{path});
-    return "myGetFileContent";
+pub const Stat = struct {
+    mode: u32,
+    nlink: u64,
+    size: i64,
+    uid: u32,
+    gid: u32,
+};
+
+pub fn getattr(path: []const u8) Stat {
+    std.log.info("router.getattr {s}", .{path});
+
+
+    // Strip the initial '/' so add +1 to left size calculations
+    if (std.mem.indexOf(u8, path[1..], "/")) |i| {
+        const backend = path[1..i+1];
+        const file_path = path[i+2..];
+
+        if (std.mem.eql(u8, "local", backend)) {
+           return generated.getattr(file_path);
+        }
+    } else {
+        std.log.warn("Invalid path: {s}", .{path});
+        // Single segment = backend root directory
+        return .{
+            .mode = c.S_IFDIR | 0o755,
+            .nlink = 2,
+            .size = 0,
+            .uid = 0,
+            .gid = 0,
+        };
+    }
+    std.log.warn("Unreachable path: {s}", .{path});
+    return .{
+        .mode = 0,
+        .nlink = 0,
+        .size = 0,
+        .uid = 0,
+        .gid = 0,
+    };
 }
 
-pub fn myListFiles(path: []const u8) !std.ArrayList([]u8) {
-    std.log.info("myListFiles {s}", .{path});
-//     var list = std.ArrayList([]u8);
-//     list.a
-    return std.ArrayList([]u8).empty;
-}
+

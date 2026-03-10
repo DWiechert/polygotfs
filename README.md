@@ -4,7 +4,7 @@ FUSE file system that supports many back-end services.
 ## Running
 Start FUSE filesystem:
 ```
-zig build run -- -f /mnt
+zig build run
 ```
 
 In another terminal, run commands:

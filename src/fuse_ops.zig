@@ -1,10 +1,39 @@
 const std = @import("std");
 const router = @import("router.zig");
+const Stat = @import("router.zig").Stat;
 
 pub const c = @cImport({
     @cDefine("FUSE_USE_VERSION", "31");
     @cInclude("fuse3/fuse.h");
 });
+
+
+
+pub fn fuseGetattr(path: [*c]const u8, stbuf: [*c]c.struct_stat, _: ?*c.struct_fuse_file_info) callconv(.c) c_int {
+    std.log.info("fuseGetattr: {s}", .{path});
+    const zig_path = std.mem.span(path);
+
+    const stat: Stat = router.getattr(zig_path);
+    stbuf.*.st_mode = @as(c_uint, stat.mode);
+    stbuf.*.st_nlink = @as(c_ulong, stat.nlink);
+    stbuf.*.st_size = @as(c_long, stat.size);
+    stbuf.*.st_uid = @as(c_uint, stat.uid);
+    stbuf.*.st_gid = @as(c_uint, stat.gid);
+
+    return 0;
+}
+
+pub fn fuseStat(path: [*c]const u8, flags: c_int, mask: c_int, _: ?*c.struct_statx, _: ?*c.struct_fuse_file_info) callconv(.c) c_int {
+    std.log.info("fuseStat: {s}\t{d}\t{d}", .{path, flags, mask});
+    // TODO: Implement
+    return 0;
+}
+
+pub fn fuseRead(path: [*c]const u8, buffer: [*c]u8, size: usize, offset: c.off_t, _: ?*c.struct_fuse_file_info) callconv(.c) c_int {
+    std.log.info("fuseRead: {s}\t{s}\t{d}\t{d}", .{path, buffer, size, offset});
+
+    return 0;
+}
 
 pub fn rename(source: [*c]const u8, target: [*c]const u8, flags: c_uint) callconv(.c) c_int {
     _ = flags;
@@ -13,6 +42,7 @@ pub fn rename(source: [*c]const u8, target: [*c]const u8, flags: c_uint) callcon
     const zig_target = std.mem.span(target);
 
     std.log.info("rename from {s} to {s}", .{zig_source, zig_target});
+    // TODO: Implement
     return 0;
 }
 
@@ -21,43 +51,9 @@ pub fn symlink(source: [*c]const u8, target: [*c]const u8) callconv(.c) c_int {
     const zig_target = std.mem.span(target);
 
     std.log.info("symlink rename from {s} to {s}", .{zig_source, zig_target});
+    // TODO: Implement
     return 0;
 }
-
-pub fn fuseGetattr(path: [*c]const u8, stbuf: [*c]c.struct_stat, _: ?*c.struct_fuse_file_info) callconv(.c) c_int {
-    std.log.info("fuseGetattr: {s}", .{path});
-    const zig_path = std.mem.span(path);
-//      _ = file_info;
-
-    // Clear stat buffer
-    @memset(@as([*]u8, @ptrCast(stbuf))[0..@sizeOf(c.struct_stat)], 0);
-
-    // Is it root directory?
-    if (std.mem.eql(u8, zig_path, "/")) {
-        stbuf.*.st_mode = c.S_IFDIR | 0o755;
-        stbuf.*.st_nlink = 2;
-        return 0;
-    }
-
-    // Check if file exists in your storage
-    const content = router.myGetFileContent(zig_path);
-//     catch {
-//         return -c.ENOENT; // File not found
-//     };
-
-    // It's a file
-    stbuf.*.st_mode = c.S_IFREG | 0o644;
-    stbuf.*.st_nlink = 1;
-    stbuf.*.st_size = @intCast(content.len);
-
-    return 0;
-}
-
-pub fn fuseStat(path: [*c]const u8, flags: c_int, mask: c_int, _: ?*c.struct_statx, _: ?*c.struct_fuse_file_info) callconv(.c) c_int {
-    std.log.info("fuseStat: {s}\t{d}\t{d}", .{path, flags, mask});
-    return 0;
-}
-
 
 // pub fn fuseReaddir(
 //     path: [*c]const u8,

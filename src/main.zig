@@ -8,6 +8,7 @@ pub fn main() !void {
     operations.symlink = polygotfs.fuse_ops.symlink;
     operations.getattr = polygotfs.fuse_ops.fuseGetattr;
     operations.statx = polygotfs.fuse_ops.fuseStat;
+    operations.read = polygotfs.fuse_ops.fuseRead;
 
 //     operations.readdir = polygotfs.fuse_ops.fuseReaddir;
 //     operations.open = polygotfs.fuse_ops.fuseOpen;
