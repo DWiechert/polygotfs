@@ -88,6 +88,13 @@ pub fn build(b: *std.Build) void {
     exe.linkLibC();
     exe.linkSystemLibrary("fuse3");
 
+    // Third-party dependencies
+    const pg = b.dependency("datetime", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    mod.addImport("datetime", pg.module("datetime"));
+
     // This declares intent for the executable to be installed into the
     // install prefix when running `zig build` (i.e. when executing the default
     // step). By default the install prefix is `zig-out/` but can be overridden

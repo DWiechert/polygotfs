@@ -1,6 +1,6 @@
 const std = @import("std");
 const generated = @import("backends/generated.zig");
-pub const c = @import("fuse_ops.zig").c;
+const c = @import("fuse_ops.zig").c;
 
 pub const Stat = struct {
     mode: u32,

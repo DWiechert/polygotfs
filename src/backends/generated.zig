@@ -1,8 +1,11 @@
 const std = @import("std");
 const Stat = @import("../router.zig").Stat;
-pub const c = @import("../fuse_ops.zig").c;
+const c = @import("../fuse_ops.zig").c;
+const TimeLibrary = @import("datetime");
+const Datetime = TimeLibrary.datetime.Datetime;
 
-pub const UUID_SIZE: u32 = 36;
+const UUID_SIZE: u32 = 36;
+const TIMESTAMP_SIZE = 25;
 
 pub fn getattr(path: []const u8) Stat {
     if (std.mem.eql(u8, "uuid", path)) {
@@ -15,9 +18,18 @@ pub fn getattr(path: []const u8) Stat {
             .gid = 0,
         };
     }
-//     if (std.mem.eql(u8, "timestamp", path)) {
-//
-//     }
+
+    if (std.mem.eql(u8, "timestamp", path)) {
+        return .{
+            // Regular file that has permission model 444 (r--r--r--)
+            .mode = c.S_IFREG | 0o444,
+            .nlink = 0,
+            .size = TIMESTAMP_SIZE,
+            .uid = 0,
+            .gid = 0,
+        };
+    }
+
     return .{
         .mode = 0,
         .nlink = 0,
@@ -44,5 +56,16 @@ pub fn read(path: []const u8, buffer: [] u8) i32 {
         @memcpy(buffer[0..UUID_SIZE], &hex);
         return UUID_SIZE;
     }
+
+    if (std.mem.eql(u8, "timestamp", path)) {
+        const now = Datetime.now();
+        if (now.formatISO8601Buf(buffer, false)) |_| {
+            return TIMESTAMP_SIZE;
+        } else |err| {
+            std.log.err("Error formatting timestamp: {}", .{err});
+            return 0;
+        }
+    }
+
     return 0;
 }
