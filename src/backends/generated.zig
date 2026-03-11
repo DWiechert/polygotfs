@@ -69,3 +69,13 @@ pub fn read(path: []const u8, buffer: [] u8) i32 {
 
     return 0;
 }
+
+pub fn readdir(_: []const u8,  paths: *std.ArrayList([]const u8)) void {
+    const allocator = std.heap.page_allocator;
+    paths.append(allocator, "timestamp") catch |err| {
+        std.log.err("Error adding dir: {}", .{err});
+    };
+    paths.append(allocator, "uuid") catch |err| {
+        std.log.err("Error adding dir: {}", .{err});
+    };
+}

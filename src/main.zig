@@ -4,11 +4,9 @@ const polygotfs = @import("polygotfs");
 pub fn main() !void {
     var operations = std.mem.zeroes(polygotfs.c.struct_fuse_operations);
 
-    operations.rename = polygotfs.fuse_ops.rename;
-    operations.symlink = polygotfs.fuse_ops.symlink;
     operations.getattr = polygotfs.fuse_ops.fuseGetattr;
-    operations.statx = polygotfs.fuse_ops.fuseStat;
     operations.read = polygotfs.fuse_ops.fuseRead;
+    operations.readdir = polygotfs.fuse_ops.fuseReaddir;
 
     // Start FUSE
     var args = [_][*c]const u8{

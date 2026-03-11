@@ -11,6 +11,7 @@ pub const Stat = struct {
 };
 
 
+
 pub fn getattr(path: []const u8) Stat {
     std.log.info("router.getattr {s}", .{path});
 
@@ -61,4 +62,32 @@ pub fn read(path: []const u8, buffer: [] u8) i32 {
     return 0;
 }
 
+pub fn readdir(dir_path: []const u8, paths: *std.ArrayList([]const u8)) void {
+    std.log.info("router.readdir {s}", .{dir_path});
 
+    const stripped = dir_path[1..]; // remove leading /
+
+    if (std.mem.indexOf(u8, stripped, "/")) |i| {
+        // Two segments: /local/something
+        const backend = stripped[0..i];
+        const sub_path = stripped[i+1..];
+        _ = sub_path;
+
+        if (std.mem.eql(u8, "local", backend)) {
+            generated.readdir(dir_path, paths);
+        }
+    } else if (stripped.len == 0) {
+        // Root: /
+        const allocator = std.heap.page_allocator;
+        paths.append(allocator, "local") catch |err| {
+            std.log.err("Error adding dir: {}", .{err});
+        };
+    } else {
+        // One segment: /local
+        const backend = stripped;
+
+        if (std.mem.eql(u8, "local", backend)) {
+            generated.readdir(dir_path, paths);
+        }
+    }
+}
