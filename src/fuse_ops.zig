@@ -23,17 +23,21 @@ pub fn fuseGetattr(path: [*c]const u8, stbuf: [*c]c.struct_stat, _: ?*c.struct_f
     return 0;
 }
 
+pub fn fuseRead(path: [*c]const u8, buffer: [*c]u8, size: usize, offset: c.off_t, _: ?*c.struct_fuse_file_info) callconv(.c) c_int {
+    std.log.info("fuseRead: {s}\t{s}\t{d}\t{d}", .{path, buffer, size, offset});
+    const zig_path = std.mem.span(path);
+    const zig_buffer = buffer[0..size];
+    const read_size = router.read(zig_path, zig_buffer);
+    return @as(c_int, read_size);
+}
+
+
 pub fn fuseStat(path: [*c]const u8, flags: c_int, mask: c_int, _: ?*c.struct_statx, _: ?*c.struct_fuse_file_info) callconv(.c) c_int {
     std.log.info("fuseStat: {s}\t{d}\t{d}", .{path, flags, mask});
     // TODO: Implement
     return 0;
 }
 
-pub fn fuseRead(path: [*c]const u8, buffer: [*c]u8, size: usize, offset: c.off_t, _: ?*c.struct_fuse_file_info) callconv(.c) c_int {
-    std.log.info("fuseRead: {s}\t{s}\t{d}\t{d}", .{path, buffer, size, offset});
-
-    return 0;
-}
 
 pub fn rename(source: [*c]const u8, target: [*c]const u8, flags: c_uint) callconv(.c) c_int {
     _ = flags;
